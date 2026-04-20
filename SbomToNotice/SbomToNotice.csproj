@@ -1,0 +1,133 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Target settings -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net10.0;net8.0</TargetFrameworks>
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>SbomToNotice</ToolCommandName>
+  </PropertyGroup>
+
+  <!-- Tool settings -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>All</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Assembly attributes -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.InteropServices.ComVisibleAttribute">
+      <_Parameter1>false</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!-- Assembly metadata -->
+  <PropertyGroup>
+    <Authors>nullmake</Authors>
+    <Copyright>Copyright 2026 nullmake</Copyright>
+  </PropertyGroup>
+
+  <!-- NuGet package metadata -->
+  <PropertyGroup>
+    <!-- License -->
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+
+    <!-- Package Information -->
+    <PackageId>$(ToolCommandName)</PackageId>
+    <PackageTags>sbom;license;notice;cyclonedx;dotnet-tool</PackageTags>
+    <Description>A command-line tool that generates a comprehensive license notice file from a Software Bill of Materials (SBOM) in CycloneDX format, automating the aggregation of license information for project compliance.</Description>
+
+    <!-- Project information  -->
+    <PackageProjectUrl>https://github.com/nullmake/sbom-to-notice</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nullmake/sbom-to-notice.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <!-- Accompany files -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\LICENSE.txt" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <!-- Deterministic Build -->
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <Deterministic>true</Deterministic>
+    <SlnRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</SlnRoot>
+    <PathMap>$(SlnRoot)=/_/</PathMap>
+  </PropertyGroup>
+
+  <!-- MinVer configuration -->
+  <PropertyGroup>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+  </PropertyGroup>
+
+  <!-- NuGet Packages -->
+  <ItemGroup>
+    <PackageReference Include="CycloneDX.Core" Version="12.0.1" />
+    <PackageReference Include="MinVer" Version="7.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.CommandLine" Version="2.0.6" />
+    <PackageReference Include="System.Linq.Async" Version="7.0.1" Condition="'$(TargetFramework)' == 'net8.0'" />
+  </ItemGroup>
+
+  <!-- ========================================= -->
+  <!--     Create additional manifest files.     -->
+  <!-- ========================================= -->
+  <Target Name="GenerateAdditionalManifestFiles" AfterTargets="Pack" Condition="'$(IsPackable)' == 'true'" >
+    <PropertyGroup>
+      <PackageOutputFullPath>$([System.IO.Path]::GetFullPath('$(PackageOutputPath)'))</PackageOutputFullPath>
+      <NugetPackage>$(PackageOutputFullPath)$(PackageId).$(PackageVersion).nupkg</NugetPackage>
+      <NugetPackageUnzip>$(PackageOutputFullPath)$(PackageId).$(PackageVersion).$([System.Guid]::NewGuid())</NugetPackageUnzip>
+      <SbomRootDir>$(NugetPackageUnzip)\_manifest</SbomRootDir>
+      <SbomFileName>manifest.cyclonedx.json</SbomFileName>
+    </PropertyGroup>
+
+    <!-- Install CycloneDX dotnet tool -->
+    <Exec Command="dotnet tool install CycloneDX" StdOutEncoding="UTF-8" StdErrEncoding="UTF-8" />
+
+    <!-- Unzipping NuGet package: -->
+    <Message Importance="high" Text="Unzipping NuGet package: &quot;$(NugetPackage)&quot; to &quot;$(NugetPackageUnzip)&quot;" />
+    <Microsoft.Build.Tasks.Unzip DestinationFolder="$(NugetPackageUnzip)" SourceFiles="$(NugetPackage)" OverwriteReadOnlyFiles="true" ContinueOnError="ErrorAndContinue" />
+    <Delete Files="$(NugetPackage)" ContinueOnError="ErrorAndContinue" />
+
+    <!-- Generate CycloneDX SBOM -->
+    <Message Importance="high" Text="$(MSBuildProjectName) -> Generate CycloneDX SBOM: @(__TargetFramework, ', ')" />
+    <ItemGroup>
+      <__TargetFramework Include="$(TargetFrameworks);$(TargetFramework)" />
+    </ItemGroup>
+    <Exec Command="dotnet CycloneDX $(MSBuildProjectFullPath) -o $(SbomRootDir)\$(MSBuildProjectName)\%(__TargetFramework.Identity) -tfm %(__TargetFramework.Identity) -fn $(SbomFileName) -rs -ed -sv $(Version)"
+          StdOutEncoding="UTF-8" StdErrEncoding="UTF-8"/>
+
+    <!-- Generate Third-Party Notices -->
+    <Message Importance="high" Text="Creating Third-Party Notices" />
+    <Exec Command="$(OutputPath)\net10.0\SbomToNotice.exe $(SbomRootDir)\$(MSBuildProjectName)\%(__TargetFramework.Identity)\$(SbomFileName) -o $(SbomRootDir)\$(MSBuildProjectName)\%(__TargetFramework.Identity)\ThirdPartyNotices.txt" />
+
+    <!-- Zipping directory -->
+    <Microsoft.Build.Tasks.ZipDirectory SourceDirectory="$(NugetPackageUnzip)" DestinationFile="$(NugetPackage)" Overwrite="true" ContinueOnError="ErrorAndContinue" />
+    <RemoveDir Directories="$(NugetPackageUnzip)" ContinueOnError="WarnAndContinue" />
+
+    <!-- Error handling -->
+    <OnError ExecuteTargets="GenerateAdditionalManifestFilesErrorCleanup" />
+  </Target>
+
+  <!-- Delete the NuGet package when an error occurs. -->
+  <Target Name="GenerateAdditionalManifestFilesErrorCleanup">
+    <Delete Files="$(NugetPackage)" ContinueOnError="ErrorAndContinue" />
+    <RemoveDir Directories="$(NugetPackageUnzip)" ContinueOnError="WarnAndContinue" />
+  </Target>
+
+</Project>
