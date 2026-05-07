@@ -1,0 +1,37 @@
+name: NuGet Pack
+
+on:
+  # push:
+  #   branches: [ main ]
+  #   tags: [ 'v*' ]
+  # pull_request:
+  #   branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # Important for MinVer to calculate version from tags
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build --output ./nupkg
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: nupkg
+          path: ./nupkg/*.nupkg
