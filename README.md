@@ -1,5 +1,6 @@
 # SbomToNotice
 
+[![NuGet Version](https://img.shields.io/nuget/v/SbomToNotice)](https://www.nuget.org/packages/SbomToNotice)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 SbomToNotice is a .NET tool that automates the generation of a comprehensive license notice file from a Software Bill of Materials (SBOM). It simplifies compliance by aggregating license information for your project's components.
