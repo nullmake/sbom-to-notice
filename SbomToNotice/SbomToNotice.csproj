@@ -85,15 +85,16 @@
   </ItemGroup>
 
   <!-- ========================================= -->
-  <!--     Create additional manifest files.     -->
+  <!--     Add compliance files to Package.      -->
   <!-- ========================================= -->
-  <Target Name="GenerateAdditionalManifestFiles" AfterTargets="Pack" Condition="'$(IsPackable)' == 'true'" >
+  <Target Name="GenerateComplianceFiles" AfterTargets="Pack" Condition="'$(IsPackable)' == 'true'" >
     <PropertyGroup>
       <FullOutputPath>$([System.IO.Path]::GetFullPath('$(OutputPath)'))</FullOutputPath>
       <PackageOutputFullPath>$([System.IO.Path]::GetFullPath('$(PackageOutputPath)'))</PackageOutputFullPath>
       <NugetPackage>$(PackageOutputFullPath)/$(PackageId).$(PackageVersion).nupkg</NugetPackage>
       <NugetPackageUnzip>$(PackageOutputFullPath)/$(PackageId).$(PackageVersion).$([System.Guid]::NewGuid())</NugetPackageUnzip>
-      <SbomRootDir>$(NugetPackageUnzip)/_manifest</SbomRootDir>
+      <ManifestDir>$(NugetPackageUnzip)/_manifest</ManifestDir>
+      <ComplianceDir>$(NugetPackageUnzip)/compliance</ComplianceDir>
       <SbomFileName>manifest.cyclonedx.json</SbomFileName>
     </PropertyGroup>
 
@@ -110,23 +111,23 @@
     <ItemGroup>
       <__TargetFramework Include="$(TargetFrameworks);$(TargetFramework)" />
     </ItemGroup>
-    <Exec Command="dotnet CycloneDX $(MSBuildProjectFullPath) -o $(SbomRootDir)/$(MSBuildProjectName)/%(__TargetFramework.Identity) -tfm %(__TargetFramework.Identity) -fn $(SbomFileName) -rs -ed -sv $(Version)"
+    <Exec Command="dotnet CycloneDX $(MSBuildProjectFullPath) -o $(ManifestDir)/%(__TargetFramework.Identity) -tfm %(__TargetFramework.Identity) -fn $(SbomFileName) -rs -ed -sv $(Version)"
           StdOutEncoding="UTF-8" StdErrEncoding="UTF-8"/>
 
     <!-- Generate Third-Party Notices -->
     <Message Importance="high" Text="Creating Third-Party Notices" />
-    <Exec Command="dotnet $(FullOutputPath)/net10.0/SbomToNotice.dll $(SbomRootDir)/$(MSBuildProjectName)/%(__TargetFramework.Identity)/$(SbomFileName) -o $(SbomRootDir)/$(MSBuildProjectName)/%(__TargetFramework.Identity)/ThirdPartyNotices.txt" />
+    <Exec Command="dotnet $(FullOutputPath)/net10.0/SbomToNotice.dll $(ManifestDir)/%(__TargetFramework.Identity)/$(SbomFileName) -o $(ComplianceDir)/%(__TargetFramework.Identity)/ThirdPartyNotices.txt" />
 
     <!-- Zipping directory -->
     <Microsoft.Build.Tasks.ZipDirectory SourceDirectory="$(NugetPackageUnzip)" DestinationFile="$(NugetPackage)" Overwrite="true" ContinueOnError="ErrorAndContinue" />
     <RemoveDir Directories="$(NugetPackageUnzip)" ContinueOnError="WarnAndContinue" />
 
     <!-- Error handling -->
-    <OnError ExecuteTargets="GenerateAdditionalManifestFilesErrorCleanup" />
+    <OnError ExecuteTargets="GenerateComplianceFilesErrorCleanup" />
   </Target>
 
   <!-- Delete the NuGet package when an error occurs. -->
-  <Target Name="GenerateAdditionalManifestFilesErrorCleanup">
+  <Target Name="GenerateComplianceFilesErrorCleanup">
     <Delete Files="$(NugetPackage)" ContinueOnError="ErrorAndContinue" />
     <RemoveDir Directories="$(NugetPackageUnzip)" ContinueOnError="WarnAndContinue" />
   </Target>
