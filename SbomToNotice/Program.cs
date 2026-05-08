@@ -76,7 +76,17 @@ internal sealed class Program
     /// <param name="path">The optional output file path.</param>
     /// <returns>A <see cref="StreamWriter"/> instance for the output.</returns>
     private static StreamWriter GetStreamWriter(string? path)
-    => string.IsNullOrWhiteSpace(path)
-        ? new StreamWriter(Console.OpenStandardOutput())
-        : new StreamWriter(path, false, new UTF8Encoding(false));
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return new StreamWriter(Console.OpenStandardOutput());
+        }
+
+        var dir = Path.GetDirectoryName(path);
+        if (dir is not null)
+        {
+            Directory.CreateDirectory(dir);
+        }
+        return new StreamWriter(path, false, new UTF8Encoding(false));
+    }
 }
