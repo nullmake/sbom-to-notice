@@ -115,7 +115,7 @@
 
     <!-- Generate Third-Party Notices -->
     <Message Importance="high" Text="Creating Third-Party Notices" />
-    <Exec Command="dotnet $(FullOutputPath)/net10.0/SbomToNotice.dll $(ManifestDir)/%(__TargetFramework.Identity)/$(SbomFileName) -o $(ComplianceDir)/%(__TargetFramework.Identity)/ThirdPartyNotices.txt" />
+    <Exec Command="dotnet $(FullOutputPath)/net10.0/SbomToNotice.dll $(ManifestDir)/%(__TargetFramework.Identity)/$(SbomFileName) -o $(ComplianceDir)/%(__TargetFramework.Identity)/ThirdPartyNotices.html --output-format Html" />
 
     <!-- Zipping directory -->
     <Microsoft.Build.Tasks.ZipDirectory SourceDirectory="$(NugetPackageUnzip)" DestinationFile="$(NugetPackage)" Overwrite="true" ContinueOnError="ErrorAndContinue" />
