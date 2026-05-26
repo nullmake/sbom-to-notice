@@ -24,16 +24,31 @@ dotnet tool install -g SbomToNotice
 To generate a license notice file, use the following command:
 
 ```bash
-SbomToNotice <path-to-sbom-file> -o <output-file-path>
+SbomToNotice manifest.cyclonedx.json -o ThirdPartyNotices.html --ofmt Html
+```
+
+```bash
+SbomToNotice manifest.cyclonedx.json -o ThirdPartyNotices.md --ofmt Markdown
 ```
 
 ### Arguments
 
-- `<path-to-sbom-file>`: The file path to your CycloneDX SBOM file (e.g., `bom.json`).
+- `<file>`:
+  Path to the SBOM file for generating the license notice.
 
 ### Options
 
-- `-o, --output <file-path>`: (Optional) The path to the output license notice file. If not specified, the output is printed to standard output.
+- `-o, --output <output>`:
+  File path for outputting the license notice.
+
+- `--ofmt, --output-format <Html|Markdown>`:
+  File format for outputting the license notice. [default: Markdown]
+
+- `-?, -h, --help`:
+  Show help and usage information
+
+- `--version`:
+  Show version information
 
 ## License
 
