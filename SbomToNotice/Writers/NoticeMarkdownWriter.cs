@@ -6,15 +6,10 @@ namespace SbomToNotice.Writers;
 /// <summary>
 /// Provides functionality to write license notice information to an output stream.
 /// </summary>
-internal static class NoticeWriter
+internal sealed class NoticeMarkdownWriter : INoticeWriter
 {
-    /// <summary>
-    /// Writes the license notice information for the provided components to the specified <see cref="StreamWriter"/>.
-    /// </summary>
-    /// <param name="components">The collection of components to write.</param>
-    /// <param name="streamWriter">The <see cref="StreamWriter"/> to output the notice text.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public static async Task WriteAsync(IEnumerable<Component> components, StreamWriter streamWriter)
+    /// <inheritdoc/>
+    public async Task WriteAsync(IEnumerable<Component> components, StreamWriter streamWriter)
     {
         await streamWriter.WriteLineAsync("# THIRD-PARTY SOFTWARE NOTICES AND INFORMATION"
             + Environment.NewLine + "Do Not Translate or Localize").ConfigureAwait(false);

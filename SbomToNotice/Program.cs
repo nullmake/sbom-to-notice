@@ -1,3 +1,4 @@
+using SbomToNotice.Options;
 using SbomToNotice.Readers;
 using SbomToNotice.Writers;
 using System.CommandLine;
@@ -23,7 +24,7 @@ internal sealed class Program
         CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 #if DEBUG
-        args = [@"..\manifest.cyclonedx.json", "-o", @"..\ThirdPartyNotices.txt.md"];
+        //args = [@"..\manifest.cyclonedx.json", "-o", @"..\ThirdPartyNotices.html", "--output-format", "html"];
         //args = ["--help"];
 #endif
         var input = new Argument<string>("file")
@@ -36,12 +37,19 @@ internal sealed class Program
             Description = "File path for outputting the license notice.",
             Required = false
         };
+        var outputFormat = new Option<OutputFormat>("--output-format", "--ofmt")
+        {
+            Description = "File format for outputting the license notice.",
+            DefaultValueFactory = _ => OutputFormat.Markdown,
+            Required = false,
+        };
 
         var rootCommand = new RootCommand(
             "Generates a license notice using a Software Bill of Materials as its source.")
         {
             input,
-            output
+            output,
+            outputFormat
         };
         rootCommand.SetAction(AppAction);
 
@@ -52,7 +60,8 @@ internal sealed class Program
             => HandleAsync(new RunOptions
             {
                 SbomPath = parseResult.GetValue(input)!,
-                Output = parseResult.GetValue(output)
+                Output = parseResult.GetValue(output),
+                OutputFormat = parseResult.GetValue(outputFormat)
             });
     }
 
@@ -68,7 +77,7 @@ internal sealed class Program
         {
             var components = await SbomReader.LoadCycloneDxAsync(options.SbomPath).ToArrayAsync().ConfigureAwait(false);
             using var sw = GetStreamWriter(options.Output);
-            await NoticeWriter.WriteAsync(components, sw).ConfigureAwait(false);
+            await new NoticeWriterFactory(options).Create().WriteAsync(components, sw).ConfigureAwait(false);
             return 0;
         }
         throw new NotImplementedException($"{sbomType} is not implemented.");
