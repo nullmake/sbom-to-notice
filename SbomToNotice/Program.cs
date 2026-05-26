@@ -1,6 +1,7 @@
 using SbomToNotice.Readers;
 using SbomToNotice.Writers;
 using System.CommandLine;
+using System.Globalization;
 using System.Text;
 
 namespace SbomToNotice;
@@ -17,6 +18,10 @@ internal sealed class Program
     /// <returns>A task that represents the asynchronous operation, returning the process exit code.</returns>
     static async Task<int> Main(string[] args)
     {
+        var culture = new CultureInfo("en-US");
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
+
 #if DEBUG
         args = [@"..\manifest.cyclonedx.json", "-o", @"..\ThirdPartyNotices.txt.md"];
         //args = ["--help"];
