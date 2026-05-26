@@ -18,7 +18,8 @@ internal sealed class Program
     static async Task<int> Main(string[] args)
     {
 #if DEBUG
-        // args = [@"..\manifest.cyclonedx.json", "-o", @"..\ThirdPartyNotices.txt.md"];
+        args = [@"..\manifest.cyclonedx.json", "-o", @"..\ThirdPartyNotices.txt.md"];
+        //args = ["--help"];
 #endif
         var input = new Argument<string>("file")
         {
@@ -37,19 +38,17 @@ internal sealed class Program
             input,
             output
         };
+        rootCommand.SetAction(AppAction);
 
         var parseResult = rootCommand.Parse(args);
-        if (parseResult.Errors.Count > 0)
-        {
-            Console.WriteLine(string.Join(Environment.NewLine, parseResult.Errors.Select(e => e.Message)));
-            return 1;
-        }
+        return await parseResult.InvokeAsync().ConfigureAwait(false);
 
-        return await HandleAsync(new RunOptions
-        {
-            SbomPath = parseResult.GetValue(input)!,
-            Output = parseResult.GetValue(output)
-        }).ConfigureAwait(false);
+        Task<int> AppAction(ParseResult parseResult, CancellationToken _)
+            => HandleAsync(new RunOptions
+            {
+                SbomPath = parseResult.GetValue(input)!,
+                Output = parseResult.GetValue(output)
+            });
     }
 
     /// <summary>
