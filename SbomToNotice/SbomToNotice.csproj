@@ -87,7 +87,7 @@
   <!-- ========================================= -->
   <!--     Add compliance files to Package.      -->
   <!-- ========================================= -->
-  <Target Name="GenerateComplianceFiles" AfterTargets="Pack" Condition="'$(IsPackable)' == 'true'" >
+  <Target Name="GenerateComplianceFiles" AfterTargets="Pack" Condition="'$(IsPackable)' == 'true'">
     <PropertyGroup>
       <FullOutputPath>$([System.IO.Path]::GetFullPath('$(OutputPath)'))</FullOutputPath>
       <PackageOutputFullPath>$([System.IO.Path]::GetFullPath('$(PackageOutputPath)'))</PackageOutputFullPath>
@@ -107,12 +107,11 @@
     <Delete Files="$(NugetPackage)" ContinueOnError="ErrorAndContinue" />
 
     <!-- Generate CycloneDX SBOM -->
-    <Message Importance="high" Text="$(MSBuildProjectName) -> Generate CycloneDX SBOM: @(__TargetFramework, ', ')" />
+    <Message Importance="high" Text="$(MSBuildProjectName) -&gt; Generate CycloneDX SBOM: @(__TargetFramework, ', ')" />
     <ItemGroup>
       <__TargetFramework Include="$(TargetFrameworks);$(TargetFramework)" />
     </ItemGroup>
-    <Exec Command="dotnet CycloneDX $(MSBuildProjectFullPath) -o $(ManifestDir)/%(__TargetFramework.Identity) -tfm %(__TargetFramework.Identity) -fn $(SbomFileName) -rs -ed -sv $(Version)"
-          StdOutEncoding="UTF-8" StdErrEncoding="UTF-8"/>
+    <Exec Command="dotnet CycloneDX $(MSBuildProjectFullPath) -o $(ManifestDir)/%(__TargetFramework.Identity) -tfm %(__TargetFramework.Identity) -fn $(SbomFileName) -rs -ed -sv $(Version)" StdOutEncoding="UTF-8" StdErrEncoding="UTF-8" />
 
     <!-- Generate Third-Party Notices -->
     <Message Importance="high" Text="Creating Third-Party Notices" />
