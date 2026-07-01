@@ -32,5 +32,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: nupkg
+          name: SbomToNotice.nupkg
           path: ./nupkg/*.nupkg
