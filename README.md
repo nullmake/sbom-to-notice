@@ -44,6 +44,9 @@ SbomToNotice manifest.cyclonedx.json -o ThirdPartyNotices.md --ofmt Markdown
 - `--ofmt, --output-format <Html|Markdown>`:
   File format for outputting the license notice. [default: Markdown]
 
+- `--refresh-cache`:
+  Forces downloading and overwrites the local cache for components in the specified SBOM.
+
 - `-?, -h, --help`:
   Show help and usage information
 
