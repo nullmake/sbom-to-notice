@@ -65,6 +65,10 @@ internal static class SbomReader
 
                 if (licenses.Count == 0)
                 {
+                    if (licenseDownloader.Sources.Length == 0)
+                    {
+                        continue;
+                    }
                     licenses = [string.Join(Environment.NewLine, licenseDownloader.Sources)];
                 }
                 else
