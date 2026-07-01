@@ -24,7 +24,7 @@ internal sealed class Program
         CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 #if DEBUG
-        //args = [@"..\manifest.cyclonedx.json", "-o", @"..\ThirdPartyNotices.html", "--output-format", "html"];
+        //args = [@"../manifest.cyclonedx.json", "-o", @"../ThirdPartyNotices.html", "--output-format", "html", "--refresh-cache"];
         //args = ["--help"];
 #endif
         var input = new Argument<string>("file")
