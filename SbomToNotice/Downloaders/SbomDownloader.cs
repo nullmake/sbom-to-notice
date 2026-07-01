@@ -9,6 +9,11 @@ namespace SbomToNotice.Downloaders;
 internal abstract class SbomDownloader : IHttpDownloader
 {
     /// <summary>
+    /// Checks whether an error has occurred.
+    /// </summary>
+    public bool HasError => _errors.Count == 0;
+
+    /// <summary>
     /// Gets a list of errors encountered during the download process.
     /// </summary>
     public ImmutableArray<string> Errors => [.. _errors];

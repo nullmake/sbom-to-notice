@@ -43,13 +43,20 @@ internal sealed class Program
             DefaultValueFactory = _ => OutputFormat.Markdown,
             Required = false,
         };
+        var refreshCache = new Option<bool>("--refresh-cache")
+        {
+            Description = "Forces downloading and overwrites the local cache for components in the specified SBOM.",
+            DefaultValueFactory = _ => false,
+            Required = false
+        };
 
         var rootCommand = new RootCommand(
             "Generates a license notice using a Software Bill of Materials as its source.")
         {
             input,
             output,
-            outputFormat
+            outputFormat,
+            refreshCache
         };
         rootCommand.SetAction(AppAction);
 
@@ -61,7 +68,8 @@ internal sealed class Program
             {
                 SbomPath = parseResult.GetValue(input)!,
                 Output = parseResult.GetValue(output),
-                OutputFormat = parseResult.GetValue(outputFormat)
+                OutputFormat = parseResult.GetValue(outputFormat),
+                RefreshCache = parseResult.GetValue(refreshCache)
             });
     }
 
@@ -72,10 +80,16 @@ internal sealed class Program
     /// <returns>A task that represents the asynchronous operation, returning the process exit code.</returns>
     public static async Task<int> HandleAsync(RunOptions options)
     {
-        var sbomType = await SbomReader.DetectSbomTypeAsync(options.SbomPath).ConfigureAwait(false);
+        var sbomType = await SbomReader
+            .DetectSbomTypeAsync(options.SbomPath)
+            .ConfigureAwait(false);
         if (sbomType == SbomType.CycloneDX)
         {
-            var components = await SbomReader.LoadCycloneDxAsync(options.SbomPath).ToArrayAsync().ConfigureAwait(false);
+            var components = await SbomReader
+                .LoadCycloneDxAsync(options.SbomPath, options.RefreshCache)
+                .ToArrayAsync()
+                .ConfigureAwait(false);
+
             using var sw = GetStreamWriter(options.Output);
             await new NoticeWriterFactory(options).Create().WriteAsync(components, sw).ConfigureAwait(false);
             return 0;

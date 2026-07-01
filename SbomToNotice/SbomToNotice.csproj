@@ -76,10 +76,13 @@
   <!-- NuGet Packages -->
   <ItemGroup>
     <PackageReference Include="CycloneDX.Core" Version="12.0.1" />
+    <PackageReference Include="Dapper" Version="2.1.79" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.9" />
     <PackageReference Include="MinVer" Version="7.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageReference Include="System.CommandLine" Version="2.0.6" />
     <PackageReference Include="System.Linq.Async" Version="7.0.1" Condition="'$(TargetFramework)' == 'net8.0'" />
   </ItemGroup>

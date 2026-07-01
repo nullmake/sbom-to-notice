@@ -1,4 +1,5 @@
 using SbomToNotice.Downloaders;
+using SbomToNotice.Repositories;
 using System.Text;
 using System.Text.Json;
 
@@ -36,20 +37,45 @@ internal static class SbomReader
     /// Loads the BOM components from the specified CycloneDX file path.
     /// </summary>
     /// <param name="path">The file path to the CycloneDX SBOM.</param>
+    /// <param name="refreshCache">whether the local cache for the components data is overwritten.</param>
     /// <returns>An asynchronous stream of <see cref="Components.Component"/> objects.</returns>
-    public static async IAsyncEnumerable<Components.Component> LoadCycloneDxAsync(string path)
+    public static async IAsyncEnumerable<Components.Component> LoadCycloneDxAsync(string path, bool refreshCache)
     {
         using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
         using var sw = new StreamReader(fs, new UTF8Encoding(false, true));
         var text = await sw.ReadToEndAsync().ConfigureAwait(false);
         var bom = CycloneDX.Json.Serializer.Deserialize(text);
+        var licenseRepository = new LicenseCacheRepository();
         foreach (var component in bom.Components.OrderBy(c => c.Name))
         {
-            var licenseDownloader = new CycloneDxLicenseDownloader();
-            var licenses = licenseDownloader.Download(component);
-            foreach (var error in licenseDownloader.Errors)
+            var licenses = refreshCache
+                ? null
+                : await licenseRepository
+                    .GetLicensesAsync(component.Name, component.Version)
+                    .ConfigureAwait(false);
+
+            if (licenses is null)
             {
-                await Console.Error.WriteAsync(error).ConfigureAwait(false);
+                var licenseDownloader = new CycloneDxLicenseDownloader();
+                licenses = licenseDownloader.Download(component);
+                foreach (var error in licenseDownloader.Errors)
+                {
+                    await Console.Error.WriteAsync(error).ConfigureAwait(false);
+                }
+
+                if (licenses.Count == 0)
+                {
+                    licenses = [string.Join(Environment.NewLine, licenseDownloader.Sources)];
+                }
+                else
+                {
+                    if (licenseDownloader.HasError)
+                    {
+                        await licenseRepository
+                            .SaveLicensesAsync(component.Name, component.Version, licenses)
+                            .ConfigureAwait(false);
+                    }
+                }
             }
 
             yield return new Components.Component(component.Name, component.Version)
@@ -58,9 +84,7 @@ internal static class SbomReader
                     ? [component.Copyright]
                     : [],
                 Authors = [.. component.Authors.Select(a => a.Name)],
-                Licenses = licenses.Count == 0
-                    ? [string.Join(Environment.NewLine, licenseDownloader.Sources)]
-                    : [.. licenses]
+                Licenses = [.. licenses]
             };
         }
     }

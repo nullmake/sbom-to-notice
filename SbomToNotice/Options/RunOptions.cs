@@ -19,4 +19,9 @@ internal sealed record RunOptions
     /// Gets or sets the file format of the output file.
     /// </summary>
     public OutputFormat OutputFormat { get; init; } = OutputFormat.Markdown;
+
+    /// <summary>
+    /// Gets or sets whether the local cache for the components data is overwritten.
+    /// </summary>
+    public bool RefreshCache { get; set; }
 }
